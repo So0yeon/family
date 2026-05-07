@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🌺퍼스널 효도 테스트🌺</title>
+<title>🌺 퍼스널 효도 테스트 🌺</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Gaegu:wght@400;700&display=swap');
 
@@ -78,7 +79,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ===== HEARTBOT ===== */
+  /* ===== HYODOBOT ===== */
   .heartbot {
     display: flex; align-items: center; gap: 12px;
     background: rgba(255,255,255,0.1);
@@ -327,8 +328,35 @@
     color: #fff; font-size: 0.95rem; font-weight: 700;
     cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
     transition: all 0.22s;
+    display: flex; align-items: center; gap: 6px;
   }
   .secondary-btn:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
+  .secondary-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ===== SAVE OVERLAY ===== */
+  #save-overlay {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+  }
+  #save-overlay.show { display: flex; }
+  #save-overlay .save-msg {
+    color: #fff; font-size: 1rem; font-weight: 700; text-align: center;
+    animation: pulse 1s infinite;
+  }
+  #save-overlay .save-spinner {
+    font-size: 2.5rem; animation: spin 1s linear infinite;
+  }
+
+  /* ===== CAPTURE CARD (hidden, used only for export) ===== */
+  #capture-card {
+    position: fixed; left: -9999px; top: 0;
+    width: 540px; padding: 36px 32px;
+    background: #1A1A2E;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #fff;
+    border-radius: 28px;
+  }
 
   /* ===== SPARKLES ===== */
   .sparkle {
@@ -357,20 +385,29 @@
 <div class="stars" id="stars"></div>
 <div class="confetti-container" id="confetti"></div>
 
+<!-- Save overlay -->
+<div id="save-overlay">
+  <span class="save-spinner">🌺</span>
+  <div class="save-msg">이미지 저장 중…<br>잠깐만 기다려줘! 💛</div>
+</div>
+
+<!-- Hidden capture card (rendered off-screen for html2canvas) -->
+<div id="capture-card"></div>
+
 <div class="wrapper">
 
   <!-- ===== INTRO SCREEN ===== -->
   <div class="screen active" id="screen-intro">
     <div class="title-wrap">
-      <div style="font-size:3rem; margin-bottom:8px;">🔍💛</div>
-      <div class="game-title">🌺퍼스널<br>효도 테스트🌺</div>
+      <div style="font-size:3rem; margin-bottom:8px;">🌺🌺</div>
+      <div class="game-title">퍼스널 효도 테스트</div>
       <div class="game-subtitle">AI가 추천하는 맞춤 효도 가이드 💛</div>
     </div>
 
     <div class="heartbot">
       <div class="heartbot-face">🤖</div>
       <div class="heartbot-text">
-        안녕! 나는 <strong>하트봇</strong>이야 💛<br>
+        안녕! 나는 <strong>효도봇</strong>이야 💛<br>
         나를 아껴주는 사람의 <strong>행복 버튼</strong>을 함께 찾아보자!<br>
         8개 질문이면 돼, 금방이야 😊
       </div>
@@ -385,7 +422,7 @@
     </div>
 
     <button class="main-btn" onclick="showScreen('screen-target')">
-      🚀 행복 버튼 찾으러 가기!
+      🚀 효도 테스트 시작!
     </button>
   </div>
 
@@ -426,7 +463,7 @@
     </div>
 
     <button class="main-btn" id="target-next-btn" disabled onclick="startGame()">
-      다음으로 → 
+      다음으로 →
     </button>
   </div>
 
@@ -453,7 +490,7 @@
   <!-- ===== LOADING SCREEN ===== -->
   <div class="screen" id="screen-loading">
     <div class="loading-wrap">
-      <span class="loading-emoji">⚙️</span>
+      <span class="loading-emoji">🌺</span>
       <div class="loading-text" id="loading-text">분석 중…</div>
     </div>
   </div>
@@ -491,6 +528,7 @@
 let selectedGuardian = '';
 let currentQ = 0;
 let scores = { 감성: 0, 실용: 0, 도움: 0, 리액션: 0, 함께: 0 };
+let currentResultType = null;
 
 // ============================================================
 // QUESTIONS
@@ -596,12 +634,13 @@ const resultTypes = {
     badge: '감성형 보호자',
     color: '#FF8FA3',
     gradient: 'linear-gradient(135deg, #FF8FA3, #C77DFF)',
+    bgAccent: '#FF8FA3',
     desc: (g) => `${g}는 비싼 선물보다 진심 담긴 표현에 더 크게 감동받는 타입이에요 😊\n따뜻한 말 한마디, 정성 담긴 편지… 그게 ${g}에게 가장 큰 선물이 될 거예요!`,
     top3: ['💌 손편지 쓰기', '💬 "사랑해요" 직접 말하기', '🌸 카네이션 한 송이'],
     guide: (g) => `오늘 집에 가서 ${g}에게 짧게라도 "감사해요" 또는 "사랑해요"라고 말해보세요. 말하기 부끄러우면 쪽지에 써서 드려도 좋아요 💛`,
     mission: '오늘의 미션: "사랑해요" 한마디 하기 💬',
     missionEmoji: '💌',
-    heartbot: '완벽한 선물보다 진심 한 스푼이 더 중요해 😊'
+    hyodobot: '완벽한 선물보다 진심 한 스푼이 더 중요해 😊'
   },
   실용: {
     emoji: '🎁',
@@ -609,12 +648,13 @@ const resultTypes = {
     badge: '실용형 보호자',
     color: '#FFD93D',
     gradient: 'linear-gradient(135deg, #FFD93D, #FF6B35)',
+    bgAccent: '#FFD93D',
     desc: (g) => `${g}는 실용적이고 현실적인 도움을 좋아하는 타입이에요 🛒\n거창한 것보다 센스 있는 작은 선물이나 간식 하나에 더 환하게 웃어요!`,
     top3: ['🍫 좋아하는 간식 사드리기', '💄 립밤·핸드크림 선물', '🛍️ 작고 센스 있는 선물'],
     guide: (g) => `${g}가 평소에 좋아하는 과자나 음료를 몰래 사서 드려보세요. "별거 아닌데요~" 하면서 드리면 더 감동이에요 🎁`,
     mission: '오늘의 미션: 간식 하나 사드리기 🍫',
     missionEmoji: '🎁',
-    heartbot: '작은 관심이 큰 사랑이야! 💛'
+    hyodobot: '작은 관심이 큰 사랑이야! 💛'
   },
   도움: {
     emoji: '🧹',
@@ -622,12 +662,13 @@ const resultTypes = {
     badge: '행동형 보호자',
     color: '#52E3C2',
     gradient: 'linear-gradient(135deg, #52E3C2, #0096FF)',
+    bgAccent: '#52E3C2',
     desc: (g) => `${g}는 말보다 행동으로 도와줄 때 가장 감동받는 타입이에요 💪\n몸이 편해지는 것, 내가 먼저 나서서 하는 것에 눈물 흘릴 수도 있어요!`,
     top3: ['💆 어깨 안마 5분', '🍽️ 설거지 대신 해드리기', '🧹 방 청소 혼자 하기'],
     guide: (g) => `오늘 ${g}가 집에 오시기 전에 집안일 하나를 미리 해두세요. 아무 말 안 해도 ${g}는 느낄 거예요 ✨`,
     mission: '오늘의 미션: 집안일 하나 미리 해두기 🧹',
     missionEmoji: '🧹',
-    heartbot: '말 없이 행동으로 보여주는 게 최고야! 💪'
+    hyodobot: '말 없이 행동으로 보여주는 게 최고야! 💪'
   },
   리액션: {
     emoji: '😂',
@@ -635,12 +676,13 @@ const resultTypes = {
     badge: '표현형 보호자',
     color: '#FF6B35',
     gradient: 'linear-gradient(135deg, #FF6B35, #FFD93D)',
+    bgAccent: '#FF6B35',
     desc: (g) => `${g}는 내가 신나게 반응해주고, 함께 웃을 때 가장 행복한 타입이에요 😄\n칭찬하고, 장난치고, 같이 웃는 것… 그게 ${g}에게 최고의 선물이에요!`,
     top3: ['🥰 애교부리기', '🎊 오버해서 칭찬하기', '😂 같이 웃을 수 있는 추억 만들기'],
     guide: (g) => `오늘 ${g}에게 "우리 가족 중에 제일 멋지다!" 같은 칭찬을 오버해서 해보세요. 처음엔 손사래 치실지 몰라도 속으론 엄청 좋아하실 거예요 😄`,
     mission: '오늘의 미션: 오버해서 칭찬 한 번 하기 😄',
     missionEmoji: '😂',
-    heartbot: '리액션이 사랑이야! 크게크게 표현해봐 🎊'
+    hyodobot: '리액션이 사랑이야! 크게크게 표현해봐 🎊'
   },
   함께: {
     emoji: '☕',
@@ -648,12 +690,13 @@ const resultTypes = {
     badge: '동행형 보호자',
     color: '#C77DFF',
     gradient: 'linear-gradient(135deg, #C77DFF, #FF8FA3)',
+    bgAccent: '#C77DFF',
     desc: (g) => `${g}는 같이 있는 시간 자체를 가장 소중하게 여기는 타입이에요 🕐\n특별한 것보다 그냥 옆에 있어주는 것, 같이 밥 먹는 것이 ${g}에게 큰 힐링이에요!`,
     top3: ['🚶 같이 산책하기', '🍽️ 밥 같이 먹기', '☕ 같이 TV 보기'],
     guide: (g) => `오늘 ${g}가 뭔가 하실 때 옆에 가서 같이 있어보세요. 핸드폰 내려놓고 그냥 옆에 있는 것만으로도 ${g}는 행복할 거예요 💛`,
     mission: '오늘의 미션: 핸드폰 없이 30분 같이 있기 ☕',
     missionEmoji: '☕',
-    heartbot: '함께하는 시간이 최고의 선물이야 💛'
+    hyodobot: '함께하는 시간이 최고의 선물이야 💛'
   }
 };
 
@@ -718,7 +761,6 @@ function renderQuestion() {
   document.getElementById('q-number').textContent = `Q${currentQ + 1}`;
   document.getElementById('q-heartbot-text').textContent = q.heartbot(selectedGuardian);
 
-  // Question text with highlighted guardian name
   const qText = document.getElementById('q-text');
   const raw = q.text(selectedGuardian);
   qText.innerHTML = raw.replace(
@@ -726,7 +768,6 @@ function renderQuestion() {
     `<span class="guardian-name">${selectedGuardian}</span>`
   );
 
-  // Choices
   const choicesEl = document.getElementById('choices');
   choicesEl.innerHTML = '';
   q.choices.forEach((c, i) => {
@@ -734,20 +775,16 @@ function renderQuestion() {
     btn.className = 'choice-btn';
     btn.innerHTML = `<span>${c.text}</span>`;
     btn.addEventListener('click', () => selectChoice(c.scores, btn));
-    btn.style.animationDelay = `${i * 0.06}s`;
     btn.style.animation = `fadeSlideUp 0.4s ease ${i * 0.06}s backwards`;
     choicesEl.appendChild(btn);
   });
 }
 
 function selectChoice(addScores, btn) {
-  // Prevent double click
   document.querySelectorAll('.choice-btn').forEach(b => { b.disabled = true; });
   btn.classList.add('selected');
   spawnSparkle();
-
   Object.entries(addScores).forEach(([key, val]) => { scores[key] += val; });
-
   setTimeout(() => {
     currentQ++;
     if (currentQ >= questions.length) {
@@ -786,11 +823,11 @@ function showLoading() {
 // RESULT
 // ============================================================
 function showResult() {
-  // Find top score
   const topKey = Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
   const type = resultTypes[topKey];
+  currentResultType = type;
 
-  document.body.style.background = `radial-gradient(ellipse at 30% 20%, ${type.color}33, var(--navy) 60%)`;
+  document.body.style.background = `radial-gradient(ellipse at 30% 20%, ${type.color}33, #1A1A2E 60%)`;
 
   const screen = document.getElementById('screen-result');
   screen.innerHTML = `
@@ -832,19 +869,108 @@ function showResult() {
     <div class="heartbot" style="background:linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0.05));">
       <div class="heartbot-face">🤖</div>
       <div class="heartbot-text">
-        <div class="heartbot-quote">"${type.heartbot}"</div>
-        <div style="font-size:0.82rem;margin-top:4px;color:rgba(255,255,255,0.6);">— 하트봇 💛</div>
+        <div class="heartbot-quote">"${type.hyodobot}"</div>
+        <div style="font-size:0.82rem;margin-top:4px;color:rgba(255,255,255,0.6);">— 효도봇 🌺</div>
       </div>
     </div>
 
     <div class="btn-row">
       <button class="main-btn" onclick="restartGame()">🔄 다시 해보기</button>
-      <button class="secondary-btn" onclick="captureHint()">📸 결과 캡처하기</button>
+      <button class="secondary-btn" id="save-btn" onclick="saveResultImage()">
+        <span>📥</span><span>이미지로 저장</span>
+      </button>
     </div>
   `;
 
   showScreen('screen-result');
   launchConfetti();
+}
+
+// ============================================================
+// IMAGE SAVE (html2canvas)
+// ============================================================
+function buildCaptureCard(type) {
+  const card = document.getElementById('capture-card');
+  const bgColor = type.bgAccent + '22';
+  card.style.background = `linear-gradient(160deg, #1A1A2E 0%, ${type.bgAccent}44 100%)`;
+
+  card.innerHTML = `
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:0.72rem;font-weight:900;letter-spacing:0.14em;color:${type.bgAccent};margin-bottom:8px;">🌺 퍼스널 효도 테스트 🌺</div>
+      <div style="font-size:3rem;margin-bottom:6px;">${type.emoji}</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#FFD93D,#FF6B35);color:#1A1A2E;font-weight:900;font-size:0.8rem;padding:5px 18px;border-radius:100px;margin-bottom:10px;">🏆 ${type.badge}</div>
+      <div style="font-size:2rem;font-weight:900;background:${type.gradient};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${type.name}</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:18px;margin-bottom:14px;">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;color:${type.bgAccent};margin-bottom:8px;">🔍 ${selectedGuardian} 분석 결과</div>
+      <div style="font-size:0.88rem;line-height:1.65;color:rgba(255,255,255,0.9);">${type.desc(selectedGuardian).replace(/\n/g, '<br>')}</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:18px;margin-bottom:14px;">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;color:${type.bgAccent};margin-bottom:10px;">🥇 추천 효도 TOP 3</div>
+      ${type.top3.map((item, i) => `
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;margin-bottom:${i<2?'8px':'0'};">
+          <span style="font-size:1.1rem;">${['🥇','🥈','🥉'][i]}</span>
+          <span style="font-size:0.88rem;font-weight:700;">${item}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div style="background:linear-gradient(135deg,rgba(255,217,61,0.12),rgba(255,107,53,0.08));border:1px solid rgba(255,217,61,0.25);border-radius:16px;padding:16px;text-align:center;margin-bottom:14px;">
+      <div style="font-size:1.6rem;margin-bottom:6px;">${type.missionEmoji}</div>
+      <div style="font-size:0.9rem;font-weight:700;line-height:1.5;">${type.mission}</div>
+    </div>
+
+    <div style="text-align:center;background:rgba(255,255,255,0.06);border-radius:14px;padding:14px;">
+      <div style="font-size:1rem;font-weight:700;color:${type.bgAccent};margin-bottom:4px;">"${type.hyodobot}"</div>
+      <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);">— 효도봇 🌺</div>
+    </div>
+
+    <div style="text-align:center;margin-top:18px;font-size:0.7rem;color:rgba(255,255,255,0.3);letter-spacing:0.06em;">
+      🌺 퍼스널 효도 테스트 · 어버이날 특별판 🌺
+    </div>
+  `;
+}
+
+async function saveResultImage() {
+  const btn = document.getElementById('save-btn');
+  if (!btn || !currentResultType) return;
+
+  btn.disabled = true;
+
+  // Show overlay
+  const overlay = document.getElementById('save-overlay');
+  overlay.classList.add('show');
+
+  try {
+    // Build the off-screen card
+    buildCaptureCard(currentResultType);
+    const card = document.getElementById('capture-card');
+
+    // Wait a tick for fonts/layout
+    await new Promise(r => setTimeout(r, 300));
+
+    const canvas = await html2canvas(card, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+    });
+
+    // Download
+    const link = document.createElement('a');
+    link.download = `효도테스트_${selectedGuardian}_${currentResultType.name}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+  } catch (e) {
+    alert('이미지 저장에 실패했어요 😢\n브라우저가 이미지 저장을 지원하지 않는 경우가 있어요.');
+  } finally {
+    overlay.classList.remove('show');
+    btn.disabled = false;
+  }
 }
 
 // ============================================================
@@ -878,7 +1004,7 @@ function launchConfetti() {
 // SPARKLE
 // ============================================================
 function spawnSparkle() {
-  const emojis = ['✨','⭐','💛','🌟','💫'];
+  const emojis = ['✨','⭐','💛','🌟','💫','🌺'];
   for (let i = 0; i < 3; i++) {
     setTimeout(() => {
       const el = document.createElement('div');
@@ -899,19 +1025,13 @@ function restartGame() {
   document.body.style.background = '';
   selectedGuardian = '';
   currentQ = 0;
+  currentResultType = null;
   scores = { 감성: 0, 실용: 0, 도움: 0, 리액션: 0, 함께: 0 };
   document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('custom-input-wrap').classList.remove('show');
   document.getElementById('custom-input').value = '';
   document.getElementById('target-next-btn').disabled = true;
   showScreen('screen-intro');
-}
-
-// ============================================================
-// CAPTURE HINT
-// ============================================================
-function captureHint() {
-  alert('📸 화면을 길게 누르거나\n스마트폰의 스크린샷 버튼을 눌러서 저장해보세요! 💛');
 }
 </script>
 </body>
