@@ -399,8 +399,8 @@
   <!-- ===== INTRO SCREEN ===== -->
   <div class="screen active" id="screen-intro">
     <div class="title-wrap">
-      <div style="font-size:3rem; margin-bottom:8px;">🌺🌺</div>
-      <div class="game-title">퍼스널 효도 테스트</div>
+      <div style="font-size:3rem; margin-bottom:8px;">🌺퍼스널 🌺</div>
+      <div class="game-title">효도 테스트</div>
       <div class="game-subtitle">AI가 추천하는 맞춤 효도 가이드 💛</div>
     </div>
 
@@ -408,7 +408,7 @@
       <div class="heartbot-face">🤖</div>
       <div class="heartbot-text">
         안녕! 나는 <strong>효도봇</strong>이야 💛<br>
-        나를 아껴주는 사람의 <strong>행복 버튼</strong>을 함께 찾아보자!<br>
+        나를 아껴주는 사람의 <strong>퍼스널 효도</strong>를 함께 찾아보자!<br>
         8개 질문이면 돼, 금방이야 😊
       </div>
     </div>
@@ -431,7 +431,7 @@
     <div class="heartbot">
       <div class="heartbot-face">🤖</div>
       <div class="heartbot-text">
-        먼저, 오늘 누구의 <strong>행복 버튼</strong>을 찾을 거야? 💛
+        먼저, 오늘 누구의 <strong>퍼스널 효도</strong>를 찾을 거야? 💛
       </div>
     </div>
 
@@ -476,7 +476,7 @@
 
     <div class="heartbot" id="q-heartbot">
       <div class="heartbot-face">🤖</div>
-      <div class="heartbot-text" id="q-heartbot-text">좋아! 행복 버튼을 찾아보자 💛</div>
+      <div class="heartbot-text" id="q-heartbot-text">좋아! 퍼스널 효도를 찾아보자 💛</div>
     </div>
 
     <div class="question-card" id="question-card">
@@ -580,7 +580,7 @@ const questions = [
   },
   {
     text: (g) => `${g}가 가장 감동받을 것 같은 건?`,
-    heartbot: () => `이게 핵심! 행복 버튼 찾기 거의 다 왔어 💛`,
+    heartbot: () => `이게 핵심! 퍼스널 효도 찾기 거의 다 왔어 💛`,
     choices: [
       { text: '💌 손편지', scores: { 감성: 3 } },
       { text: '🧹 집안일 돕기', scores: { 도움: 3 } },
@@ -799,7 +799,7 @@ function selectChoice(addScores, btn) {
 // LOADING
 // ============================================================
 const loadingMessages = [
-  (g) => `${g}의 행복 버튼을 분석 중… 🔍`,
+  (g) => `${g}의 퍼스널 효도를 분석 중… 🔍`,
   (g) => `${g}의 취향 계산하는 중… 💻`,
   (g) => `맞춤 효도 가이드 생성 중… ✨`,
   (g) => `거의 다 됐어! 결과 포장 중… 🎁`,
